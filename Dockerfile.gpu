@@ -1,0 +1,32 @@
+# Sử dụng base image chuyên dụng từ ai-dock - tối ưu sẵn cho ComfyUI và GPU
+FROM ghcr.io/ai-dock/comfyui:latest-cuda-12.1.1-py3.10-ubuntu-22.04
+
+# Thiết lập thư mục làm việc chính
+WORKDIR /workspace
+
+# 1. Cài đặt các công cụ hệ thống cần thiết cho Video và Tải nhanh
+RUN apt-get update && apt-get install -y \
+    aria2 \
+    ffmpeg \
+    libgl1-mesa-glx \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Cài đặt sẵn các Custom Nodes quan trọng (Pre-build)
+# Việc này giúp tránh việc phải tải lại node mỗi khi khởi động Pod
+WORKDIR /workspace/ComfyUI/custom_nodes
+RUN git clone https://github.com/ltdrdata/ComfyUI-Manager.git && \
+    git clone https://github.com/city96/ComfyUI-GGUF.git && \
+    git clone https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git && \
+    git clone https://github.com/Wan-Video/ComfyUI-WanVideo.git && \
+    git clone https://github.com/burnover/ComfyUI-TeaCache.git
+
+# 3. Cài đặt dependencies cho các node đã clone
+RUN find . -name "requirements.txt" -exec pip install --no-cache-dir -r {} \;
+
+# 4. Tích hợp Script Provisioning theo tiêu chuẩn ai-dock
+# Lưu ý: Chúng ta sử dụng tên provisioning.sh để khớp với biến môi trường mặc định
+COPY provisioning.sh /workspace/provisioning.sh
+RUN chmod +x /workspace/provisioning.sh
+
+# Quay lại thư mục gốc của ComfyUI
+WORKDIR /workspace/ComfyUI

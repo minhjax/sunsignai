@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  comfyui-engine:
+    build: 
+      context: .
+      dockerfile: Dockerfile.gpu
+    container_name: sunsign_ai_engine
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    ports:
+      - "8188:8188" # ComfyUI Web
+      - "2222:22"   # SSH
+    volumes:
+      # Sử dụng volume bền vững trên RunPod để không phải tải lại model khi restart pod
+      - /workspace/models:/workspace/ComfyUI/models
+      - /workspace/custom_nodes:/workspace/ComfyUI/custom_nodes
+      - /workspace/output:/workspace/ComfyUI/output
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - WORKSPACE=/workspace
+      - HF_TOKEN=${HF_TOKEN}
+      - PROVISIONING_SCRIPT=/workspace/provisioning.sh
+      - WEB_ENABLE_AUTH=false # Tắt auth nếu dùng Runpod proxy
+    restart: always
