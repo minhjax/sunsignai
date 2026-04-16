@@ -59,12 +59,12 @@ done
 echo "🔧 Đang cài đặt Python dependencies..."
 for dir in */ ; do
     if [ -f "$dir/requirements.txt" ]; then
-        pip install -r "$dir/requirements.txt" -q
+        pip install -r "$dir/requirements.txt" -q --root-user-action=ignore
     fi
 done
 
 # Cài đặt thư viện hệ thống cần thiết cho video và xử lý font
-apt-get update -y && apt-get install -y ffmpeg libsm6 libxext6 fonts-liberation fontconfig
+apt-get update -y && apt-get install -y aria2 ffmpeg libsm6 libxext6 fonts-liberation fontconfig
 
 # ==============================================================================
 # PHẦN 2: TẢI MODEL CỐT LÕI (WAN, FLUX, VAE, CLIP)
