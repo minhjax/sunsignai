@@ -11,15 +11,31 @@ CUSTOM_NODES_DIR="$COMFY_DIR/custom_nodes"
 echo "🚀 Bắt đầu cấu hình Video AI Engine (Kích hoạt Toàn bộ Hệ thống)..."
 echo "📂 Thư mục gốc: $COMFY_DIR"
 
-# --- HÀM TẢI MODEL TỐC ĐỘ CAO (Dùng aria2c) ---
+# --- HÀM TẢI MODEL TỐC ĐỘ CAO (CÓ CƠ CHẾ DỰ PHÒNG) ---
 function fast_download() {
     local url=$1
     local dir=$2
     local filename=$3
     mkdir -p "$dir"
+    
     if [ ! -f "$dir/$filename" ]; then
         echo "📥 Đang tải $filename..."
-        aria2c -x 16 -s 16 -k 1M -c --auto-file-renaming=false "$url" -d "$dir" -o "$filename"
+        
+        # Nếu có aria2, thử dùng để tăng tốc
+        if command -v aria2c &> /dev/null; then
+            aria2c -x 16 -s 16 -k 1M -c --auto-file-renaming=false "$url" -d "$dir" -o "$filename"
+            
+            # Nếu aria2c bị chặn (ví dụ lỗi Auth của rife47), tự động chuyển sang wget
+            if [ $? -ne 0 ]; then
+                echo "⚠️ aria2c bị chặn tải $filename. Đang chuyển sang wget..."
+                rm -f "$dir/$filename" "$dir/$filename.aria2" # Dọn file lỗi
+                wget -c "$url" -O "$dir/$filename"
+            fi
+        else
+            # Nếu chưa cài aria2, dùng wget luôn
+            echo "⚠️ Chưa có aria2c. Đang tải bằng wget..."
+            wget -c "$url" -O "$dir/$filename"
+        fi
     else
         echo "✅ $filename đã tồn tại."
     fi
