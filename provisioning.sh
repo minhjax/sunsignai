@@ -1,16 +1,17 @@
 #!/bin/bash
 
 # ==============================================================================
-# HỆ THỐNG PROVISIONING SERVERLESS CHO VIDEO ADS CHUYÊN NGHIỆP (ULTIMATE BUNDLE)
+# HỆ THỐNG PROVISIONING SERVERLESS CHO VIDEO ADS CHUYÊN NGHIỆP (FULL STACK)
+# Dự án: Sunsign AI - Video Engine
 # ==============================================================================
 
 COMFY_DIR=${COMFYUI_DIR:-"/workspace/ComfyUI"}
 CUSTOM_NODES_DIR="$COMFY_DIR/custom_nodes"
 
-echo "🚀 Bắt đầu cấu hình Video AI Engine (Kích hoạt Post-Production)..."
+echo "🚀 Bắt đầu cấu hình Video AI Engine (Kích hoạt Toàn bộ Hệ thống)..."
 echo "📂 Thư mục gốc: $COMFY_DIR"
 
-# --- HÀM TẢI MODEL TỐC ĐỘ CAO ---
+# --- HÀM TẢI MODEL TỐC ĐỘ CAO (Dùng aria2c) ---
 function fast_download() {
     local url=$1
     local dir=$2
@@ -30,59 +31,46 @@ function fast_download() {
 mkdir -p "$CUSTOM_NODES_DIR"
 cd "$CUSTOM_NODES_DIR"
 
-echo "📦 Đang cài đặt thư viện Custom Nodes toàn diện..."
+echo "📦 Đang cài đặt thư viện Custom Nodes..."
 
 declare -A NODES=(
-    # Nhóm Core & Render Video
     ["ComfyUI-Manager"]="https://github.com/ltdrdata/ComfyUI-Manager.git"
     ["ComfyUI-GGUF"]="https://github.com/city96/ComfyUI-GGUF.git"
     ["ComfyUI-WanVideoWrapper"]="https://github.com/kijai/ComfyUI-WanVideoWrapper.git"
     ["ComfyUI-VideoHelperSuite"]="https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git"
-    
-    # Nhóm Điều khiển & Nhận diện (IPAdapter, ControlNet)
     ["ComfyUI_IPAdapter_plus"]="https://github.com/cubiq/ComfyUI_IPAdapter_plus.git"
     ["ComfyUI-ControlNet-Aux"]="https://github.com/Fannovel16/comfyui_controlnet_aux.git"
     ["ComfyUI-Advanced-ControlNet"]="https://github.com/Kosinkadink/ComfyUI-Advanced-ControlNet.git"
-    
-    # Nhóm Fallback (Dự phòng cho Animation)
-    ["ComfyUI-AnimateDiff-Evolved"]="https://github.com/Kosinkadink/ComfyUI-AnimateDiff-Evolved.git"
-
-    # Nhóm Hậu Kỳ: Chuyển cảnh, Hiệu ứng, Đổ chữ (NEW 🌟)
     ["ComfyUI-Impact-Pack"]="https://github.com/ltdrdata/ComfyUI-Impact-Pack.git"
-    ["ComfyUI_essentials"]="https://github.com/cubiq/ComfyUI_essentials.git" # Các phép toán mask, resize siêu tốc
-    ["ComfyUI-KJNodes"]="https://github.com/Kijai/ComfyUI-KJNodes.git" # Tạo mask động, transition, noise
-    ["ComfyUI-Easy-Use"]="https://github.com/yolain/ComfyUI-Easy-Use.git" # Chèn Text, Font, Layout cực mạnh
-    
-    # Nhóm Upscale & Frame Interpolation (NEW 🌟)
-    ["ComfyUI-Frame-Interpolation"]="https://github.com/Fannovel16/ComfyUI-Frame-Interpolation.git" # Tăng frame lên 60fps
-    ["ComfyUI_UltimateSDUpscale"]="https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git" # Upscale 4K chi tiết
+    ["ComfyUI_essentials"]="https://github.com/cubiq/ComfyUI_essentials.git"
+    ["ComfyUI-KJNodes"]="https://github.com/Kijai/ComfyUI-KJNodes.git"
+    ["ComfyUI-Easy-Use"]="https://github.com/yolain/ComfyUI-Easy-Use.git"
+    ["ComfyUI-Frame-Interpolation"]="https://github.com/Fannovel16/ComfyUI-Frame-Interpolation.git"
+    ["ComfyUI_UltimateSDUpscale"]="https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git"
 )
 
 for node in "${!NODES[@]}"; do
     if [ ! -d "$node" ]; then
-        echo "⬇️ Đang clone $node..."
         git clone "${NODES[$node]}"
-    else
-        echo "✅ Node $node đã tồn tại."
     fi
 done
 
-# Cài đặt dependencies Python ngầm cho tất cả nodes
-echo "🔧 Đang cài đặt thư viện Python (Quá trình này có thể mất vài phút)..."
+# Cài đặt Python Dependencies
+echo "🔧 Đang cài đặt Python dependencies..."
 for dir in */ ; do
     if [ -f "$dir/requirements.txt" ]; then
         pip install -r "$dir/requirements.txt" -q
     fi
 done
 
-# Bổ sung các thư viện hệ thống cần cho video và font chữ
-apt-get update -y && apt-get install -y ffmpeg libsm6 libxext6 fonts-liberation
+# Cài đặt thư viện hệ thống cần thiết cho video và xử lý font
+apt-get update -y && apt-get install -y ffmpeg libsm6 libxext6 fonts-liberation fontconfig
 
 # ==============================================================================
 # PHẦN 2: TẢI MODEL CỐT LÕI (WAN, FLUX, VAE, CLIP)
 # ==============================================================================
 cd "$COMFY_DIR"
-echo "🧠 Đang tải Base Models..."
+echo "🧠 Đang tải AI Models..."
 
 fast_download "https://huggingface.co/city96/Wan2.1-I2V-14B-720P-GGUF/resolve/main/wan2.1-i2v-14b-720p-Q8_0.gguf" "$COMFY_DIR/models/unet" "wan2.1-i2v-14b-720p-Q8_0.gguf"
 fast_download "https://huggingface.co/Wan-Video/Wan2.1-I2V-14B-720P/resolve/main/wan_vae.safetensors" "$COMFY_DIR/models/vae" "wan_vae.safetensors"
@@ -90,48 +78,47 @@ fast_download "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/
 fast_download "https://huggingface.co/city96/FLUX.1-schnell-gguf/resolve/main/flux1-schnell-Q8_0.gguf" "$COMFY_DIR/models/unet" "flux1-schnell-Q8_0.gguf"
 
 # ==============================================================================
-# PHẦN 3: TẢI MODEL ĐIỀU KHIỂN & ANIMATION (IPADAPTER, CONTROLNET)
+# PHẦN 3: TẢI MODEL ĐIỀU KHIỂN & BỔ TRỢ (IPADAPTER, CONTROLNET)
 # ==============================================================================
-echo "🎨 Đang tải ControlNet, IPAdapter & AnimateDiff Models..."
+echo "🎨 Đang tải ControlNet & IPAdapter..."
 
 fast_download "https://huggingface.co/h94/IP-Adapter/resolve/main/models/image_encoder/model.safetensors" "$COMFY_DIR/models/clip_vision" "clip_vision_h.safetensors"
 fast_download "https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter-plus_sdxl_vit-h.safetensors" "$COMFY_DIR/models/ipadapter" "ip-adapter-plus_sdxl_vit-h.safetensors"
 fast_download "https://huggingface.co/diffusers/controlnet-depth-sdxl-1.0/resolve/main/diffusion_pytorch_model.safetensors" "$COMFY_DIR/models/controlnet" "controlnet_depth_sdxl.safetensors"
 fast_download "https://huggingface.co/Bingsu/adetailer/resolve/main/face_yolov8m.pt" "$COMFY_DIR/models/ultralytics/bbox" "face_yolov8m.pt"
 
-ANIMATEDIFF_DIR="$COMFY_DIR/custom_nodes/ComfyUI-AnimateDiff-Evolved/models"
-fast_download "https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_mm.ckpt" "$ANIMATEDIFF_DIR" "v3_sd15_mm.ckpt"
-
 # ==============================================================================
-# PHẦN 4: TẢI MODEL HẬU KỲ (UPSCALER & FRAME INTERPOLATION) - NEW 🌟
+# PHẦN 4: TẢI MODEL HẬU KỲ (UPSCALER & FRAME INTERPOLATION)
 # ==============================================================================
-echo "✨ Đang tải Models Hậu Kỳ (4K Upscale & 60FPS Smooth)..."
+echo "✨ Đang tải Hậu Kỳ Models..."
 
-# Model Upscaler huyền thoại: 4x-UltraSharp (Nét căng, giữ chi tiết sản phẩm cực tốt)
 fast_download "https://huggingface.co/uwg/upscaler/resolve/main/ESRGAN/4x-UltraSharp.pth" "$COMFY_DIR/models/upscale_models" "4x-UltraSharp.pth"
-
-# Model Frame Interpolation (RIFE) - Giúp video Wan 2.1 mượt mà không bị sượng
 VFI_DIR="$COMFY_DIR/custom_nodes/ComfyUI-Frame-Interpolation/ckpts/rife"
 fast_download "https://huggingface.co/styler00dollar/VSGAN-tensorrt-docker/resolve/main/models/rife47.pth" "$VFI_DIR" "rife47.pth"
-# ==============================================================================
-# PHẦN 5: CÀI ĐẶT FONT CHỮ THƯƠNG HIỆU & QUẢNG CÁO
-# ==============================================================================
-echo "🔤 Đang cài đặt phông chữ độc quyền cho Text Node..."
 
-FONT_DIR="/usr/share/fonts/truetype/custom_ads_fonts"
+# ==============================================================================
+# PHẦN 5: CÀI ĐẶT FONT CHỮ THƯƠNG HIỆU & QUẢNG CÁO TỰ ĐỘNG
+# ==============================================================================
+echo "🔤 Đang cài đặt cấu trúc phông chữ từ GitHub (sunsignai)..."
+
+FONT_DIR="/usr/share/fonts/truetype/sunsign_fonts"
 mkdir -p "$FONT_DIR"
 
-# Ví dụ tải các font từ kho lưu trữ của bạn (thay URL bằng link thực tế của bạn)
-# Font mạnh mẽ cho Hook/Tiêu đề
-fast_download "https://link-toi-r2-cua-ban.com/fonts/BebasNeue-Regular.ttf" "$FONT_DIR" "BebasNeue-Regular.ttf"
-fast_download "https://link-toi-r2-cua-ban.com/fonts/Montserrat-Black.ttf" "$FONT_DIR" "Montserrat-Black.ttf"
+# Kéo repo GitHub về thư mục tạm
+echo "   -> Đang tải dữ liệu từ GitHub..."
+git clone --depth 1 https://github.com/minhjax/sunsignai.git /tmp/sunsignai_repo
 
-# Font sang trọng, bay bổng
-fast_download "https://link-toi-r2-cua-ban.com/fonts/PlayfairDisplay-Bold.ttf" "$FONT_DIR" "PlayfairDisplay-Bold.ttf"
+# Copy toàn bộ thư mục fonts (bao gồm các thư mục con Antonio, Inter...) vào hệ thống
+if [ -d "/tmp/sunsignai_repo/fonts" ]; then
+    echo "   -> Đang cài đặt phông chữ vào hệ thống..."
+    cp -r /tmp/sunsignai_repo/fonts/* "$FONT_DIR/"
+    # Cập nhật cache font hệ thống
+    fc-cache -f -v
+else
+    echo "⚠️ Không tìm thấy thư mục fonts trong repo."
+fi
 
-# Cập nhật bộ nhớ đệm font của hệ điều hành để ComfyUI nhận diện ngay lập tức
-fc-cache -f -v
+# Dọn dẹp rác
+rm -rf /tmp/sunsignai_repo
 
-echo "✅ Đã cài đặt xong phông chữ!"
-
-echo "🎉 CHUẨN BỊ HOÀN TẤT! Hệ thống đã sở hữu sức mạnh của một Studio chuyên nghiệp."
+echo "🎉 HOÀN TẤT PROVISIONING! Hệ thống Sunsign AI Engine đã sẵn sàng rực sáng."
