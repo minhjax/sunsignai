@@ -5,7 +5,7 @@
 # Dự án: Sunsign AI - Video Engine (First -> Last Frame Workflow)
 # ==============================================================================
 
-COMFY_DIR=${COMFYUI_DIR:-"/sunspace"}
+COMFY_DIR=${COMFYUI_DIR:-"/workspace/ComfyUI"}
 CUSTOM_NODES_DIR="$COMFY_DIR/custom_nodes"
 
 echo "🚀 Bắt đầu cấu hình Video AI Engine (Kích hoạt Toàn bộ Hệ thống)..."
